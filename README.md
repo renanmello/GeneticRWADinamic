@@ -39,6 +39,7 @@ python GeneticRWADinamic.py
 networkx>=3.0
 numpy>=1.21.0
 matplotlib>=3.5.0
+pandas>=1.3.0
 ```
 
 ## 📚 Academic References
