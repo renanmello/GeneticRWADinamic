@@ -9,6 +9,7 @@ import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+import optuna
 
 
 class WDMSimulator:
@@ -26,10 +27,11 @@ class WDMSimulator:
                  k: int = 150, 
                  population_size: int = 120,
                  num_generations: int = 30,
-                 crossover_rate: int = 0.6,
-                 mutation_rate: int = 0.02, 
-                 hops_weight = 0.7,
-                 wavelength_weight = 0.3
+                 crossover_rate: float = 0.6,
+                 mutation_rate: float = 0.02, 
+                 hops_weight: float = 0.7,
+                 wavelength_weight: float = 0.3,
+                 tournament_size: float = 3,
 
                  ):
         """
@@ -56,6 +58,7 @@ class WDMSimulator:
         self.gene_variation_mode = gene_variation_mode
         self.hops_weight = hops_weight
         self.wavelength_weight = wavelength_weight
+        self.tournament_size = tournament_size
 
         # Calcula todos os k-shortest paths uma vez
         self.k_shortest_paths = self._get_all_k_shortest_paths(k=self.k)
@@ -369,8 +372,8 @@ class WDMSimulator:
 
             # Gera resto da população
             while len(next_generation) < self.population_size:
-                parent1 = self._tournament_selection(population, source_targets)
-                parent2 = self._tournament_selection(population, source_targets)
+                parent1 = self._tournament_selection(population, source_targets, self.tournament_size)
+                parent2 = self._tournament_selection(population, source_targets, self.tournament_size)
 
                 if random.random() < self.crossover_rate:
                     child1, child2 = self._crossover(parent1, parent2)
@@ -591,8 +594,126 @@ class WDMSimulator:
         return df
 
 
+def objective(trial: optuna.Trial) -> float:
+    """Função objetivo para otimização com Optuna."""
+    
+    # Definição dos espaços de busca para cada hiperparâmetro
+    population_size = trial.suggest_int('population_size', 50, 500)
+    num_generations = trial.suggest_int('num_generations', 20, 500)
+    crossover_rate = trial.suggest_float('crossover_rate', 0.1, 0.9)
+    mutation_rate = trial.suggest_float('mutation_rate', 0.01, 0.9)
+    hops_weight = trial.suggest_float('hops_weight', 0.1, 0.9)
+    wavelength_weight = trial.suggest_float('wavelength_weight', 0.1, 0.9)
+    tournament_size = trial.suggest_int('tournament_size', 1,10)
+    
+    # Garantir que os pesos somem 1
+    total_weight = hops_weight + wavelength_weight
+    if total_weight != 1.0:
+        # Normalizar os pesos
+        hops_weight /= total_weight
+        wavelength_weight /= total_weight
+    
+    # Criação do grafo NSFNet
+    graph = nx.Graph()
+    nsfnet_edges = [
+        (0, 1), (0, 2), (0, 3), (1, 2), (1, 7), (2, 5), (3, 4), (3, 10),
+        (4, 6), (4, 5), (5, 8), (5, 12), (6, 7), (7, 9), (8, 9), (9, 11),
+        (9, 13), (10, 11), (10, 13), (11, 12)
+    ]
+    graph.add_edges_from(nsfnet_edges)
+    
+    # Configuração do simulador com os hiperparâmetros sugeridos
+    wdm_simulator = WDMSimulator(
+        graph=graph,
+        num_wavelengths=4,
+        gene_size=5,
+        manual_selection=True,
+        gene_variation_mode="fixed",
+        k=5,
+        population_size=population_size,
+        num_generations=num_generations,
+        crossover_rate=crossover_rate,
+        mutation_rate=mutation_rate,
+        hops_weight=hops_weight,
+        wavelength_weight=wavelength_weight,
+        tournament_size = tournament_size
+    )
+    
+    # Executa a simulação
+    results = wdm_simulator.simulate_network(num_simulations=5)
+    
+    # Calcula a métrica de desempenho (média das probabilidades de bloqueio)
+    performance_metric = calculate_performance_metric(results)
+    
+    return performance_metric
+
+def calculate_performance_metric(results: Dict[str, List[float]]) -> float:
+    """
+    Calcula a métrica de desempenho a partir dos resultados.
+    
+    Args:
+        results: Dicionário com os resultados da simulação
+        
+    Returns:
+        Média das probabilidades de bloqueio de todas as requisições
+    """
+    all_means = []
+    
+    for key, values in results.items():
+        if values:  # Verifica se a lista não está vazia
+            mean_value = np.mean(values)
+            all_means.append(mean_value)
+    
+    if all_means:
+        return np.mean(all_means)
+    else:
+        return float('inf')  # Retorna um valor ruim se não houver resultados
+
+def optimize_hyperparameters(n_trials: int = 100) -> Dict[str, any]:
+    """
+    Otimiza os hiperparâmetros usando Optuna.
+    
+    Args:
+        n_trials: Número de tentativas de otimização
+        
+    Returns:
+        Dicionário com os melhores hiperparâmetros encontrados
+    """
+    # Criar estudo de otimização
+    study = optuna.create_study(
+        direction='minimize',  # Diminuir a probabilidade de bloqueio
+        sampler=optuna.samplers.TPESampler(),
+        pruner=optuna.pruners.MedianPruner()
+    )
+    
+    # Executar otimização
+    study.optimize(objective, n_trials=n_trials)
+    
+    # Retornar os melhores hiperparâmetros
+    return {
+        'best_params': study.best_params,
+        'best_value': study.best_value,
+        'study': study
+    }
+
 def main():
-    """Função principal para executar a simulação."""
+    """Função principal para executar a simulação otimizada."""
+    
+    # Otimizar hiperparâmetros
+    print("Otimizando hiperparâmetros com Optuna...")
+    optimization_results = optimize_hyperparameters(n_trials=100)
+    
+    best_params = optimization_results['best_params']
+
+    # Normaliza os pesos assim como foi feito no código de otimização
+    if 'hops_weight' in best_params and 'wavelength_weight' in best_params:
+        total_weight = best_params['hops_weight'] + best_params['wavelength_weight']
+        best_params['hops_weight'] = best_params['hops_weight']/total_weight
+        best_params['wavelength_weight'] = best_params['wavelength_weight']/total_weight
+
+    print(f"Melhores hiperparâmetros encontrados: {best_params}")
+    print(f"Melhor valor da média de probabilidade de bloqueio das requisições: {optimization_results['best_value']}")
+    
     # Criação do grafo NSFNet
     graph = nx.Graph()
     nsfnet_edges = [
@@ -602,15 +723,19 @@ def main():
     ]
     graph.add_edges_from(nsfnet_edges)
 
-    # Configuração e execução da simulação
-    print("Iniciando simulação WDM...")
+    # Configuração e execução da simulação com os melhores hiperparâmetros
+    print("Iniciando simulação WDM com melhores hiperparâmetros...")
     wdm_simulator = WDMSimulator(
         graph=graph,
         num_wavelengths=4,
         gene_size=5,
         manual_selection=True,
         gene_variation_mode="fixed",
-        k=5
+        k=5,
+        **{k: v for k, v in best_params.items() if k in [
+            'population_size', 'num_generations', 'crossover_rate', 
+            'mutation_rate', 'hops_weight', 'wavelength_weight', 'tournament_size'
+        ]}
     )
 
     # Executa simulação
@@ -621,7 +746,6 @@ def main():
     wdm_simulator.generate_comparison_table()
 
     print("Simulação concluída com sucesso!")
-
 
 if __name__ == "__main__":
     main()
