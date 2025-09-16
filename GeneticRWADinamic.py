@@ -23,7 +23,15 @@ class WDMSimulator:
                  gene_size: int = 5,
                  manual_selection: bool = False,
                  gene_variation_mode: str = "fixed",
-                 k: int = 150):
+                 k: int = 150, 
+                 population_size: int = 120,
+                 num_generations: int = 30,
+                 crossover_rate: int = 0.6,
+                 mutation_rate: int = 0.02, 
+                 hops_weight = 0.7,
+                 wavelength_weight = 0.3
+
+                 ):
         """
         Inicializa o simulador WDM.
 
@@ -37,15 +45,17 @@ class WDMSimulator:
         """
         self.graph = graph
         self.num_wavelengths = num_wavelengths
-        self.population_size = 120
-        self.num_generations = 30
-        self.crossover_rate = 0.6
-        self.mutation_rate = 0.02
+        self.population_size = population_size
+        self.num_generations = num_generations
+        self.crossover_rate = crossover_rate
+        self.mutation_rate = mutation_rate
         self.gene_size = gene_size
         self.k = k
         self.manual_pairs = [(0, 12), (2, 6), (5, 10), (4, 11), (3, 8)]
         self.manual_selection = manual_selection
         self.gene_variation_mode = gene_variation_mode
+        self.hops_weight = hops_weight
+        self.wavelength_weight = wavelength_weight
 
         # Calcula todos os k-shortest paths uma vez
         self.k_shortest_paths = self._get_all_k_shortest_paths(k=self.k)
@@ -220,8 +230,8 @@ class WDMSimulator:
                 wavelength_changes += 1
 
         # Função de fitness combinada (normalizada)
-        fitness = (0.7 * (1 / (hops + 1)) +
-                   0.3 * (1 / (wavelength_changes + 1)))
+        fitness = (self.hops_weight * (1 / (hops + 1)) +
+                   self.wavelength_weight * (1 / (wavelength_changes + 1)))
 
         return fitness
 
