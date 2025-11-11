@@ -1,0 +1,11 @@
+{
+    "best_params_DE_algorithm": {
+        "hops_weight": 0.4043474258659441,
+        "wavelength_weight": 0.13386472030716182,
+        "CR": 0.4460061152612631,
+        "F": 0.3761823610488102,
+        "n_gen": 18
+    },
+    "best_value_DE_algorithm": 0.34470666666666666,
+    "datetime": "2025-11-11 11:53:09.213229"
+}
