@@ -387,7 +387,10 @@ class WDMSimulator:
 
             population = next_generation[:self.population_size]
 
-        return max(population, key=lambda ind: self._fitness(ind, source_targets))
+        best_individual = max(population, key=lambda ind: self._fitness(ind, source_targets))
+        best_fitness_value = self._fitness(best_individual, source_targets)
+    
+        return best_individual, best_fitness_value
 
     def _calculate_blocking_probability(self, route: List[int], load: int) -> float:
         """
@@ -429,7 +432,7 @@ class WDMSimulator:
                 print(f"Executando simulação {sim + 1}/{num_simulations}")
 
                 # Executa algoritmo genético para todos os pares
-                best_individual = self.genetic_algorithm(self.manual_pairs)
+                best_individual, best_fitness_value = self.genetic_algorithm(self.manual_pairs)
 
                 for gene_idx, (source, target) in enumerate(self.manual_pairs):
                     if gene_idx >= len(best_individual):
@@ -466,7 +469,7 @@ class WDMSimulator:
                     self._save_gene_results(gene_idx, source, target, blocking_probs)
 
         print(f"Resultados salvos em {output_file}")
-        return results
+        return results, best_individual, best_fitness_value
 
     def _save_gene_results(self, gene_idx: int, source: int, target: int,
                            blocking_probs: List[float]) -> None:
@@ -640,7 +643,7 @@ def objective(trial: optuna.Trial) -> float:
     )
     
     # Executa a simulação
-    results = wdm_simulator.simulate_network(num_simulations=5)
+    results, best_individual, best_fitness_value = wdm_simulator.simulate_network(num_simulations=5)
     
     # Calcula a métrica de desempenho (média das probabilidades de bloqueio)
     performance_metric = calculate_performance_metric(results)
@@ -696,12 +699,33 @@ def optimize_hyperparameters(n_trials: int = 100) -> Dict[str, any]:
         'study': study
     }
 
+
+from pymoo.core.problem import ElementwiseProblem
+class MyProblem(ElementwiseProblem):
+    def __init__(self, gene_size, wdm_simulator):
+
+        self.wdm_simulator = wdm_simulator
+
+        super().__init__(n_var=gene_size,
+                         n_obj=1,
+                         xl=np.array([0]*gene_size),
+                         xu=np.array([gene_size - 1]*gene_size),
+                         vtype=int)
+    
+    def _evaluate(self, x, out, *args, **kwargs):
+
+        x_int = x.astype(int)
+
+        fitness = -self.wdm_simulator._fitness(x_int.tolist(), self.wdm_simulator.manual_pairs)
+
+        out["F"] = [fitness]
+
 def main():
     """Função principal para executar a simulação otimizada."""
     
     # Otimizar hiperparâmetros
     print("Otimizando hiperparâmetros com Optuna...")
-    optimization_results = optimize_hyperparameters(n_trials=100)
+    optimization_results = optimize_hyperparameters(n_trials=10)
     
     best_params = optimization_results['best_params']
 
@@ -739,11 +763,19 @@ def main():
     )
 
     # Executa simulação
-    results = wdm_simulator.simulate_network(num_simulations=5)  # numero de simulações
+    results, best_individual, best_fitness_value = wdm_simulator.simulate_network(num_simulations=5)  # numero de simulações
 
     # Gera visualizações e relatórios
     wdm_simulator.plot_individual_genes()
     wdm_simulator.generate_comparison_table()
+
+    print("-" * 30)
+    print("AG + OPTUNA")
+    print("Melhor Indivíduo da População (AG) - Após otimização com Optuna:")
+    print(best_individual)
+    print("Valor de Fitness do Melhor Indivíduo (AG) - Após otimização com Optuna:")
+    print(best_fitness_value)
+
 
     print("Simulação concluída com sucesso!")
 
