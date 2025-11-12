@@ -624,6 +624,7 @@ class WDMSimulator:
         plt.tight_layout()
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
         plt.show()
+        plt.close()
 
         print(f"Gráfico salvo em {save_path}")
 
@@ -696,6 +697,11 @@ def objective(trial: optuna.Trial) -> float:
     hops_weight = trial.suggest_float('hops_weight', 0.1, 0.9)
     wavelength_weight = trial.suggest_float('wavelength_weight', 0.1, 0.9)
 
+    # Parâmetros da rede
+    num_wavelengths = trial.suggest_int('num_wavelengths', 2, 20)
+    k = trial.suggest_int('k', 2, 20)
+
+
     # --- novos parâmetros PSO ---
     w = trial.suggest_float('w', 0.4, 0.9)       # Inércia
     c1 = trial.suggest_float('c1', 1.0, 2.5)     # Aceleração cognitiva
@@ -721,11 +727,11 @@ def objective(trial: optuna.Trial) -> float:
     # Configuração do simulador com os hiperparâmetros sugeridos
     wdm_simulator = WDMSimulator(
         graph=graph,
-        num_wavelengths=4,
+        num_wavelengths=num_wavelengths,
         gene_size=5,
         manual_selection=True,
         gene_variation_mode="fixed",
-        k=5,
+        k=k,
         hops_weight=hops_weight,
         wavelength_weight=wavelength_weight,
         w=w,
@@ -810,7 +816,7 @@ def main():
     
     # Otimizar hiperparâmetros
     print("Otimizando hiperparâmetros com Optuna...")
-    optimization_results = optimize_hyperparameters(n_trials=2)
+    optimization_results = optimize_hyperparameters(n_trials=100)
     
     best_params = optimization_results['best_params']
 
@@ -836,15 +842,14 @@ def main():
     print("Iniciando simulação WDM com melhores hiperparâmetros...")
     wdm_simulator = WDMSimulator(
         graph=graph,
-        num_wavelengths=4,
         gene_size=5,
         manual_selection=True,
         gene_variation_mode="fixed",
-        k=5,
         **{k: v for k, v in best_params.items() if k in [
             'population_size', 'num_generations', 'crossover_rate',
             'mutation_rate', 'hops_weight', 'wavelength_weight',
-            'tournament_size', 'w', 'c1', 'c2', 'n_gen' 
+            'tournament_size', 'w', 'c1', 'c2', 'n_gen',
+            'num_wavelengths', 'k'
         ]}
     )
 

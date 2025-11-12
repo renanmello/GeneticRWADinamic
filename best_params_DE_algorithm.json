@@ -1,11 +1,13 @@
 {
     "best_params_DE_algorithm": {
-        "hops_weight": 0.4043474258659441,
-        "wavelength_weight": 0.13386472030716182,
-        "CR": 0.4460061152612631,
-        "F": 0.3761823610488102,
-        "n_gen": 18
+        "hops_weight": 0.10735619837080246,
+        "wavelength_weight": 0.16384270937719075,
+        "num_wavelengths": 20,
+        "k": 11,
+        "CR": 0.6831728995159971,
+        "F": 0.3056849619696248,
+        "n_gen": 55
     },
-    "best_value_DE_algorithm": 0.34470666666666666,
-    "datetime": "2025-11-11 11:53:09.213229"
+    "best_value_DE_algorithm": 0.12328000000000001,
+    "datetime": "2025-11-11 17:46:46.327824"
 }

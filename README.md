@@ -47,3 +47,5 @@ pandas>=1.3.0
 - Ramaswami, R., & Sivarajan, K. N. (2001). Optical Networks: A Practical Perspective
 - Zang, H., Jue, J. P., & Mukherjee, B. (2000). "A review of routing and wavelength assignment approaches for wavelength-routed optical WDM networks"
 - Goldberg, D. E. (1989). Genetic Algorithms in Search, Optimization, and Machine Learning
+
+0.34470
