@@ -1,0 +1,13 @@
+{
+    "best_params_AG_algorithm": {
+        "population_size": 471,
+        "num_generations": 151,
+        "crossover_rate": 0.25376754555864733,
+        "mutation_rate": 0.5368344027950837,
+        "hops_weight": 0.7,
+        "wavelength_weight": 0.3,
+        "tournament_size": 1
+    },
+    "best_value_AG_algorithm": 0.3435426666666667,
+    "datetime": "2025-11-12 18:46:41.466269"
+}

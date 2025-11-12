@@ -1,0 +1,13 @@
+{
+    "best_params_PSO_algorithm": {
+        "hops_weight": 0.7,
+        "wavelength_weight": 0.3,
+        "k": 83,
+        "w": 0.8721849267305505,
+        "c1": 2.106945662833465,
+        "c2": 1.605433520641191,
+        "n_gen": 57
+    },
+    "best_value_PSO_algorithm": 0.23804666666666666,
+    "datetime": "2025-11-12 18:43:23.896055"
+}

@@ -623,8 +623,8 @@ class WDMSimulator:
 
         plt.tight_layout()
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        plt.show()
-        plt.close()
+        # plt.show()
+        # plt.close()
 
         print(f"Gráfico salvo em {save_path}")
 
@@ -682,6 +682,9 @@ class WDMSimulator:
 
 
 def objective(trial: optuna.Trial) -> float:
+
+    global GLOBAL_WAVELENGTHS
+
     """Função objetivo para otimização com Optuna."""
     
     # Definição dos espaços de busca para cada hiperparâmetro
@@ -694,12 +697,11 @@ def objective(trial: optuna.Trial) -> float:
     # tournament_size = trial.suggest_int('tournament_size', 1,10)
 
     # Parâmetros de pesos
-    hops_weight = trial.suggest_float('hops_weight', 0.1, 0.9)
-    wavelength_weight = trial.suggest_float('wavelength_weight', 0.1, 0.9)
+    hops_weight = trial.suggest_float('hops_weight', 0.7, 0.7)
+    wavelength_weight = trial.suggest_float('wavelength_weight', 0.3, 0.3)
 
     # Parâmetros da rede
-    num_wavelengths = trial.suggest_int('num_wavelengths', 2, 20)
-    k = trial.suggest_int('k', 2, 20)
+    k = trial.suggest_int('k', 83, 83)
 
 
     # --- novos parâmetros PSO ---
@@ -727,7 +729,7 @@ def objective(trial: optuna.Trial) -> float:
     # Configuração do simulador com os hiperparâmetros sugeridos
     wdm_simulator = WDMSimulator(
         graph=graph,
-        num_wavelengths=num_wavelengths,
+        num_wavelengths=GLOBAL_WAVELENGTHS,
         gene_size=5,
         manual_selection=True,
         gene_variation_mode="fixed",
@@ -771,6 +773,9 @@ def calculate_performance_metric(results: Dict[str, List[float]]) -> float:
         return float('inf')  # Retorna um valor ruim se não houver resultados
 
 def optimize_hyperparameters(n_trials: int = 100) -> Dict[str, any]:
+
+    global GLOBAL_WAVELENGTHS
+
     """
     Otimiza os hiperparâmetros usando Optuna.
     
@@ -790,14 +795,21 @@ def optimize_hyperparameters(n_trials: int = 100) -> Dict[str, any]:
     # Executar otimização
     study.optimize(objective, n_trials=n_trials)
 
+    # Normaliza os pesos assim como foi feito no código de otimização
+    best_params = study.best_params
+    if 'hops_weight' in best_params and 'wavelength_weight' in best_params:
+        total_weight = best_params['hops_weight'] + best_params['wavelength_weight']
+        best_params['hops_weight'] = best_params['hops_weight']/total_weight
+        best_params['wavelength_weight'] = best_params['wavelength_weight']/total_weight
+
         # Salva apenas os resultados principais em JSON
     best_results = {
-        "best_params_PSO_algorithm": study.best_params,
+        "best_params_PSO_algorithm": best_params,
         "best_value_PSO_algorithm": study.best_value,
         "datetime": str(datetime.datetime.now())
     }
 
-    output_path = "best_params_PSO_algorithm.json"
+    output_path = f"best_params_PSO_algorithm_{GLOBAL_WAVELENGTHS}_wavelengths.json"
     with open(output_path, "w") as f:
         json.dump(best_results, f, indent=4)
 
@@ -810,65 +822,71 @@ def optimize_hyperparameters(n_trials: int = 100) -> Dict[str, any]:
         'study': study
     }
 
+GLOBAL_WAVELENGTHS = None 
 
 def main():
-    """Função principal para executar a simulação otimizada."""
-    
-    # Otimizar hiperparâmetros
-    print("Otimizando hiperparâmetros com Optuna...")
-    optimization_results = optimize_hyperparameters(n_trials=100)
-    
-    best_params = optimization_results['best_params']
 
-    # Normaliza os pesos assim como foi feito no código de otimização
-    if 'hops_weight' in best_params and 'wavelength_weight' in best_params:
-        total_weight = best_params['hops_weight'] + best_params['wavelength_weight']
-        best_params['hops_weight'] = best_params['hops_weight']/total_weight
-        best_params['wavelength_weight'] = best_params['wavelength_weight']/total_weight
+    for num_wavelengths in [4,8]:
 
-    print(f"Melhores hiperparâmetros encontrados: {best_params}")
-    print(f"Melhor valor da média de probabilidade de bloqueio das requisições: {optimization_results['best_value']}")
-    
-    # Criação do grafo NSFNet
-    graph = nx.Graph()
-    nsfnet_edges = [
-        (0, 1), (0, 2), (0, 3), (1, 2), (1, 7), (2, 5), (3, 4), (3, 10),
-        (4, 6), (4, 5), (5, 8), (5, 12), (6, 7), (7, 9), (8, 9), (9, 11),
-        (9, 13), (10, 11), (10, 13), (11, 12)
-    ]
-    graph.add_edges_from(nsfnet_edges)
+        global GLOBAL_WAVELENGTHS
 
-    # Configuração e execução da simulação com os melhores hiperparâmetros
-    print("Iniciando simulação WDM com melhores hiperparâmetros...")
-    wdm_simulator = WDMSimulator(
-        graph=graph,
-        gene_size=5,
-        manual_selection=True,
-        gene_variation_mode="fixed",
-        **{k: v for k, v in best_params.items() if k in [
-            'population_size', 'num_generations', 'crossover_rate',
-            'mutation_rate', 'hops_weight', 'wavelength_weight',
-            'tournament_size', 'w', 'c1', 'c2', 'n_gen',
-            'num_wavelengths', 'k'
-        ]}
-    )
+        GLOBAL_WAVELENGTHS = num_wavelengths
+        """Função principal para executar a simulação otimizada."""
+        
+        # Otimizar hiperparâmetros
+        print("Otimizando hiperparâmetros com Optuna...")
+        optimization_results = optimize_hyperparameters(n_trials=2)
+        
+        best_params = optimization_results['best_params']
 
-    # Executa simulação
-    results, best_individual, best_fitness_value = wdm_simulator.simulate_network(num_simulations=5)  # numero de simulações
+        # Normaliza os pesos assim como foi feito no código de otimização
+        if 'hops_weight' in best_params and 'wavelength_weight' in best_params:
+            total_weight = best_params['hops_weight'] + best_params['wavelength_weight']
+            best_params['hops_weight'] = best_params['hops_weight']/total_weight
+            best_params['wavelength_weight'] = best_params['wavelength_weight']/total_weight
 
-    # Gera visualizações e relatórios
-    wdm_simulator.plot_individual_genes()
-    wdm_simulator.generate_comparison_table()
+        print(f"Melhores hiperparâmetros encontrados: {best_params}")
+        print(f"Melhor valor da média de probabilidade de bloqueio das requisições: {optimization_results['best_value']}")
+        
+        # Criação do grafo NSFNet
+        graph = nx.Graph()
+        nsfnet_edges = [
+            (0, 1), (0, 2), (0, 3), (1, 2), (1, 7), (2, 5), (3, 4), (3, 10),
+            (4, 6), (4, 5), (5, 8), (5, 12), (6, 7), (7, 9), (8, 9), (9, 11),
+            (9, 13), (10, 11), (10, 13), (11, 12)
+        ]
+        graph.add_edges_from(nsfnet_edges)
 
-    print("-" * 30)
-    print("PSO + OPTUNA")
-    print("Melhor Indivíduo da População (PSO) - Após otimização com Optuna:")
-    print(best_individual)
-    print("Valor de Fitness do Melhor Indivíduo (PSO) - Após otimização com Optuna:")
-    print(best_fitness_value)
+        # Configuração e execução da simulação com os melhores hiperparâmetros
+        print("Iniciando simulação WDM com melhores hiperparâmetros...")
+        wdm_simulator = WDMSimulator(
+            graph=graph,
+            gene_size=5,
+            manual_selection=True,
+            gene_variation_mode="fixed",
+            **{k: v for k, v in best_params.items() if k in [
+                'population_size', 'num_generations', 'crossover_rate',
+                'mutation_rate', 'hops_weight', 'wavelength_weight',
+                'tournament_size', 'w', 'c1', 'c2', 'n_gen', 'k'
+            ]}
+        )
+
+        # Executa simulação
+        results, best_individual, best_fitness_value = wdm_simulator.simulate_network(num_simulations=5, output_file=f"blocking_results_PSO_algorithm_{GLOBAL_WAVELENGTHS}_wavelengths.txt")  # numero de simulações
+
+        # Gera visualizações e relatórios
+        wdm_simulator.plot_individual_genes(save_path = f"grafico_wdm_simulation_PSO_algorithm_{GLOBAL_WAVELENGTHS}_wavelengths.png")
+        wdm_simulator.generate_comparison_table(output_file=f"comparacao_rotas_PSO_algorithm_{GLOBAL_WAVELENGTHS}_wavelengths.csv")
+
+        print("-" * 30)
+        print("PSO + OPTUNA")
+        print("Melhor Indivíduo da População (PSO) - Após otimização com Optuna:")
+        print(best_individual)
+        print("Valor de Fitness do Melhor Indivíduo (PSO) - Após otimização com Optuna:")
+        print(best_fitness_value)
 
 
-    print("Simulação concluída com sucesso!")
+        print("Simulação concluída com sucesso!")
 
 
 
