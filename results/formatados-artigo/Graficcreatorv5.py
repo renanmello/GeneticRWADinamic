@@ -10,7 +10,7 @@ prob_0_12_original = [0.004830917874396135, 0.02336448598130841,0.18918918918918
                       0.7566371681415929,0.8035714285714286,0.7094017094017094,0.7345132743362832,
                       0.7589743589743589, 0.821917808219178]
 
-prob_1_9_original = [0.0, 0.030456852791878174, 0.05583756345177665, 0.11557788944723618, 0.14634146341463414, 0.16336633663366337,
+prob_2_6_original = [0.0, 0.030456852791878174, 0.05583756345177665, 0.11557788944723618, 0.14634146341463414, 0.16336633663366337,
                      0.21256038647342995, 0.30434782608695654, 0.39903846153846156, 0.3382352941176471,
                      0.38095238095238093, 0.3761904761904762, 0.48148148148148145, 0.44549763033175355,
                      0.6046511627906976, 0.4669811320754717, 0.5258215962441315, 0.5454545454545454,
@@ -18,7 +18,7 @@ prob_1_9_original = [0.0, 0.030456852791878174, 0.05583756345177665, 0.115577889
                      0.573394495412844, 0.6139534883720931, 0.6175115207373272, 0.6363636363636364, 0.6681614349775785,
                      0.5825688073394495, 0.6666666666666666, 0.6926605504587156, 0.6226415094339622, 0.6326415894639622]
 
-prob_2_6_original = [0.0, 0.042735042735042736, 0.10833333333333334, 0.16115702479338842, 0.18518518518518517,
+prob_5_10_original = [0.0, 0.042735042735042736, 0.10833333333333334, 0.16115702479338842, 0.18518518518518517,
                      0.2962962962962963, 0.2809917355371901, 0.38461538461538464,0.3870967741935484,
                      0.5387755102040817,0.5, 0.4878048780487805, 0.5873015873015873,
                      0.5910931174089069, 0.5301204819277109, 0.6275303643724697, 0.62,
@@ -26,7 +26,7 @@ prob_2_6_original = [0.0, 0.042735042735042736, 0.10833333333333334, 0.161157024
                      0.7449392712550608,0.7804878048780488,0.7, 0.7108433734939759,
                      0.8023715415019763, 0.7470355731225297, 0.7836734693877551, 0.7298387096774194, 0.76]
 
-prob_3_8_original = [0.005, 0.0297029702970297, 0.06796116504854369, 0.11961722488038277,
+prob_4_11_original = [0.005, 0.0297029702970297, 0.06796116504854369, 0.11961722488038277,
                      0.12560386473429952, 0.2688679245283019, 0.3125, 0.3412322274881517,
                      0.33653846153846156, 0.4009216589861751,0.5488372093023256, 0.5045871559633027,
                      0.5348837209302325, 0.5570776255707762, 0.6164383561643836, 0.5211267605633803,
@@ -35,7 +35,7 @@ prob_3_8_original = [0.005, 0.0297029702970297, 0.06796116504854369, 0.119617224
                      0.7201834862385321, 0.759090909090909, 0.6902654867256637, 0.6805555555555556,
                      0.755656108597285, 0.77]
 
-prob_5_10_original = [0.0, 0.03225806451612903, 0.026737967914438502, 0.08762886597938144,
+prob_3_8_original = [0.0, 0.03225806451612903, 0.026737967914438502, 0.08762886597938144,
                       0.12562814070351758, 0.18781725888324874, 0.24873096446700507, 0.2814070351758794,
                       0.3, 0.30392156862745096,0.3417085427135678,0.395,
                       0.5242718446601942, 0.5714285714285714, 0.49038461538461536, 0.49261083743842365,
@@ -46,17 +46,17 @@ prob_5_10_original = [0.0, 0.03225806451612903, 0.026737967914438502, 0.08762886
 
 # Correção e conversão para %
 prob_0_12_original = [x * 100 for x in prob_0_12_original]
-prob_1_9_original  = [x * 100 for x in prob_1_9_original]
 prob_2_6_original  = [x * 100 for x in prob_2_6_original]
-prob_3_8_original  = [x * 100 for x in prob_3_8_original]
-prob_5_10_original = [x * 100 for x in prob_5_10_original]
+prob_5_10_original  = [x * 100 for x in prob_5_10_original ]
+prob_4_11_original  = [x * 100 for x in prob_4_11_original]
+prob_3_8_original = [x * 100 for x in prob_3_8_original]
 
 # Adiciona ponto (0, 0)
 prob_0_12 = [0.0] + prob_0_12_original
-prob_1_9  = [0.0] + prob_1_9_original
 prob_2_6  = [0.0] + prob_2_6_original
-prob_3_8  = [0.0] + prob_3_8_original
-prob_5_10 = [0.0] + prob_5_10_original
+prob_5_10  = [0.0] + prob_5_10_original
+prob_4_11  = [0.0] + prob_4_11_original
+prob_3_8 = [0.0] + prob_3_8_original
 
 loads = list(range(0, 31))
 
@@ -74,18 +74,18 @@ plt.rcParams.update({
 
 plt.figure(figsize=(6, 4))  # Tamanho comum para artigos científicos
 plt.plot(loads, prob_0_12, 'o-', color='green',  linewidth=1.2, markersize=3, label='Request 0-12')
-plt.plot(loads, prob_1_9,  'o-', color='blue',   linewidth=1.2, markersize=3, label='Request 1-9')
-plt.plot(loads, prob_2_6,  'o-', color='red',    linewidth=1.2, markersize=3, label='Request 2-6')
-plt.plot(loads, prob_3_8,  'o-', color='purple', linewidth=1.2, markersize=3, label='Request 3-8')
-plt.plot(loads, prob_5_10, 'o-', color='gold',   linewidth=1.2, markersize=3, label='Request 5-10')
+plt.plot(loads, prob_2_6,  'o-', color='blue',   linewidth=1.2, markersize=3, label='Request 1-9')
+plt.plot(loads, prob_5_10,  'o-', color='red',    linewidth=1.2, markersize=3, label='Request 2-6')
+plt.plot(loads, prob_4_11,  'o-', color='purple', linewidth=1.2, markersize=3, label='Request 3-8')
+plt.plot(loads, prob_3_8, 'o-', color='gold',   linewidth=1.2, markersize=3, label='Request 5-10')
 
 #plt.title("Probability of Blocking vs Load", fontweight='bold')
 plt.xlabel("Load")
-plt.ylabel("Probability of Blocking (%)")
+plt.ylabel("Blocking Probability(%)")
 plt.grid(True, linestyle='--', alpha=0.6, linewidth=0.5)
 plt.legend(loc='lower right')  # Posição comum em artigos
 plt.ylim(0, 100)
 plt.xlim(0, 30)
 plt.tight_layout()
-plt.savefig("my_plot_version4.png", dpi=300, bbox_inches='tight')
+plt.savefig("my_plot_version.png", dpi=300, bbox_inches='tight')
 plt.show()

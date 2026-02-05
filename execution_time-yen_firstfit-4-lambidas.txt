@@ -1,0 +1,3 @@
+=== Tempo de Execução da Simulação ===
+Tempo total: 802.92 segundos
+

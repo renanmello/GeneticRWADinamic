@@ -38,7 +38,7 @@ class WDMSimulator:
         self.graph = graph
         self.num_wavelengths = num_wavelengths
         self.population_size = 120
-        self.num_generations = 30
+        self.num_generations = 40
         self.crossover_rate = 0.6
         self.mutation_rate = 0.02
         self.gene_size = gene_size
@@ -596,7 +596,7 @@ def main():
     print("Iniciando simulação WDM...")
     wdm_simulator = WDMSimulator(
         graph=graph,
-        num_wavelengths=8,
+        num_wavelengths=4,
         gene_size=5,
         manual_selection=True,
         gene_variation_mode="fixed",
@@ -604,7 +604,7 @@ def main():
     )
 
     # Executa simulação
-    results = wdm_simulator.simulate_network(num_simulations=20)  # Reduzido para teste
+    results = wdm_simulator.simulate_network(num_simulations=30)  # Reduzido para teste
 
     # Gera visualizações e relatórios
     wdm_simulator.plot_individual_genes()

@@ -2,6 +2,7 @@ import os
 from itertools import islice
 from typing import List, Tuple, Dict, Optional
 
+import time
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
@@ -356,6 +357,10 @@ class WDMYenFirstFit:
 
 def main():
     """Função principal para executar simulação com YEN + First Fit."""
+    
+    # >>>>> INÍCIO DA MEDIÇÃO DE TEMPO <<<<<
+    start_time = time.time()
+    
 
     # Criação do grafo NSFNet
     graph = nx.Graph()
@@ -373,7 +378,7 @@ def main():
     print("=== YEN ROUTING (SHORTEST PATH) + FIRST FIT WAVELENGTH ALLOCATION ===\n")
     simulator = WDMYenFirstFit(
         graph=graph,
-        num_wavelengths=4,
+        num_wavelengths=8,
         k=5,
         requests=custom_requests
     )
@@ -387,14 +392,27 @@ def main():
 
     print("Iniciando simulação de tráfego...\n")
     results = simulator.simulate_traffic_multiple_runs(
-        num_runs=10,
+        num_runs=20,
         total_calls_per_load=1000,
         call_duration_range=(5.0, 15.0)
     )
-
+    end_time = time.time()
     simulator.save_results(results, "yen_firstfit_results.txt")
     simulator.plot_results(results, "yen_firstfit_results.png")
+    execution_time = end_time - start_time
 
+    print("\nSimulação concluída com sucesso!")
+    # Exibir no console
+    print(f"\nTempo total de execução: {execution_time:.2f} segundos")
+
+    # Salvar em arquivo separado
+    with open("execution_time.txt", "w") as time_file:
+        time_file.write("=== Tempo de Execução da Simulação ===\n")
+        time_file.write(f"Tempo total: {execution_time:.2f} segundos\n")
+        time_file.write(f"Início: {time.ctime(start_time)}\n")
+        time_file.write(f"Término: {time.ctime(end_time)}\n")
+
+    print("Tempo de execução salvo em: execution_time.txt")
     print("\nSimulação concluída com sucesso!")
 
 
